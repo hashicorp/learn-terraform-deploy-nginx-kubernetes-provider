@@ -6,7 +6,7 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "1.13.3"
+      version = "2.0.1"
     }
   }
 }
@@ -30,8 +30,6 @@ data "azurerm_kubernetes_cluster" "cluster" {
 }
 
 provider "kubernetes" {
-  load_config_file = false
-
   host = data.azurerm_kubernetes_cluster.cluster.kube_config.0.host
 
   client_certificate     = base64decode(data.azurerm_kubernetes_cluster.cluster.kube_config.0.client_certificate)
