@@ -1,43 +1,45 @@
 terraform {
   required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "3.52.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.20.0"
     }
+
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "1.13.3"
+      version = "2.0.1"
     }
   }
 }
 
-data "terraform_remote_state" "gke" {
+data "terraform_remote_state" "eks" {
   backend = "local"
 
   config = {
-    path = "../learn-terraform-provision-gke-cluster/terraform.tfstate"
+    path = "../learn-terraform-provision-eks-cluster/terraform.tfstate"
   }
 }
 
-# Retrieve GKE cluster information
-provider "google" {
-  project = data.terraform_remote_state.gke.outputs.project_id
-  region  = data.terraform_remote_state.gke.outputs.region
+# Retrieve EKS cluster information
+provider "aws" {
+  region = data.terraform_remote_state.eks.outputs.region
 }
 
-# Retrieve an access token as the Terraform runner
-data "google_client_config" "provider" {}
-
-data "google_container_cluster" "my_cluster" {
-  name     = data.terraform_remote_state.gke.outputs.kubernetes_cluster_name
-  location = data.terraform_remote_state.gke.outputs.region
+data "aws_eks_cluster" "cluster" {
+  name = data.terraform_remote_state.eks.outputs.cluster_id
 }
 
 provider "kubernetes" {
-  load_config_file = false
-
-  host = data.terraform_remote_state.gke.outputs.kubernetes_cluster_host
-
-  token                  = data.google_client_config.provider.access_token
-  cluster_ca_certificate = base64decode(data.google_container_cluster.my_cluster.master_auth[0].cluster_ca_certificate)
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args = [
+      "eks",
+      "get-token",
+      "--cluster-name",
+      data.aws_eks_cluster.cluster.name
+    ]
+  }
 }
