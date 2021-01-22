@@ -6,7 +6,7 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "1.13.3"
+      version = "2.0.1"
     }
   }
 }
@@ -34,8 +34,6 @@ data "google_container_cluster" "my_cluster" {
 }
 
 provider "kubernetes" {
-  load_config_file = false
-
   host = data.terraform_remote_state.gke.outputs.kubernetes_cluster_host
 
   token                  = data.google_client_config.provider.access_token
