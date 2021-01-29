@@ -7,12 +7,26 @@ terraform {
   }
 }
 
-data "terraform_remote_state" "cluster" {
-  backend = "local"
-
-  config = {
-    path = "../<directory-here>/terraform.tfstate"
-  }
+variable "host" {
+  type = string
 }
 
-provider "kubernetes" {}
+variable "client_certificate" {
+  type = string
+}
+
+variable "client_key" {
+  type = string
+}
+
+variable "cluster_ca_certificate" {
+  type = string
+}
+
+provider "kubernetes" {
+  host = var.host
+
+  client_certificate     = var.client_certificate
+  client_key             = var.client_key
+  cluster_ca_certificate = var.cluster_ca_certificate
+}
